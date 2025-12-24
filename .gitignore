@@ -35,3 +35,9 @@ logs/
 
 # Local configuration
 local.properties
+application-local.properties
+application-local.yml
+
+# Node
+node_modules/
+.claude/
