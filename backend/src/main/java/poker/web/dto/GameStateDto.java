@@ -20,31 +20,36 @@ public record GameStateDto(
     String recommendation,
     List<String> availableActions
 ) {
-    public static GameStateDto from(GameState state, Player humanPlayer, boolean handComplete, String resultMessage, String recommendation) {
-        boolean isHumanTurn = !handComplete && state.getCurrentPlayer() == humanPlayer && humanPlayer.canAct();
+    public static GameStateDto from(GameState state, List<Player> allPlayers, Player humanPlayer, boolean handComplete, String resultMessage, String recommendation) {
+        boolean isHumanTurn = !handComplete && state != null && state.getCurrentPlayer() == humanPlayer && humanPlayer.canAct();
 
-        List<PlayerDto> playerDtos = state.getPlayers().stream()
-            .map(p -> PlayerDto.from(p, p == humanPlayer || state.getStage() == GameStage.SHOWDOWN || handComplete))
+        // Use all players (including eliminated) for display
+        List<PlayerDto> playerDtos = allPlayers.stream()
+            .map(p -> PlayerDto.from(p, p == humanPlayer || (state != null && state.getStage() == GameStage.SHOWDOWN) || handComplete))
             .toList();
 
-        List<CardDto> communityCards = state.getCommunityCards().stream()
+        List<CardDto> communityCards = state != null ? state.getCommunityCards().stream()
             .map(CardDto::from)
-            .toList();
+            .toList() : List.of();
 
         return new GameStateDto(
             playerDtos,
             communityCards,
-            state.getStage(),
-            state.getPot().getTotal(),
-            state.getCurrentBet(),
-            state.getActivePlayerIndex(),
-            state.getButtonPosition(),
+            state != null ? state.getStage() : GameStage.PREFLOP,
+            state != null ? state.getPot().getTotal() : 0,
+            state != null ? state.getCurrentBet() : 0,
+            state != null ? state.getActivePlayerIndex() : -1,
+            state != null ? state.getButtonPosition() : 0,
             isHumanTurn,
             handComplete,
             resultMessage,
             recommendation,
             List.of()
         );
+    }
+
+    public static GameStateDto from(GameState state, Player humanPlayer, boolean handComplete, String resultMessage, String recommendation) {
+        return from(state, state != null ? state.getPlayers() : List.of(), humanPlayer, handComplete, resultMessage, recommendation);
     }
 
     public static GameStateDto from(GameState state, Player humanPlayer) {

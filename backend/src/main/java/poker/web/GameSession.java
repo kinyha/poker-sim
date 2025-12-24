@@ -67,6 +67,14 @@ public class GameSession {
 
     public void startHand() {
         if (gameRunning) return;
+
+        // Check if human player has 0 chips
+        if (humanPlayer.getChips() <= 0) {
+            handComplete = true;
+            lastResultMessage = "Игра окончена! У вас закончились фишки.";
+            return;
+        }
+
         gameRunning = true;
         handComplete = false;
         lastResultMessage = null;

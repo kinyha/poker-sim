@@ -109,11 +109,20 @@ export function PokerTable({ sessionId, gameState, onStateUpdate }: Props) {
 
       {!gameState.handComplete && gameState.isHumanTurn && (
         <div className="action-panel">
-          {gameState.recommendation && (
-            <div className="recommendation">
-              <span className="rec-label">Подсказка:</span> {gameState.recommendation}
-            </div>
-          )}
+          {gameState.recommendation && (() => {
+            const parts = gameState.recommendation.split(': ')
+            const action = parts[0]
+            const reasoning = parts.slice(1).join(': ')
+            return (
+              <div className="recommendation">
+                <div className="rec-header">
+                  <span className="rec-label">Подсказка:</span>
+                </div>
+                <div className="rec-action">Действие: <strong>{action}</strong></div>
+                <div className="rec-reasoning">Обоснование: {reasoning}</div>
+              </div>
+            )
+          })()}
           <div className="action-buttons">
             <button
               onClick={() => handleAction('FOLD')}
@@ -143,11 +152,14 @@ export function PokerTable({ sessionId, gameState, onStateUpdate }: Props) {
 
             <div className="raise-controls">
               <input
-                type="range"
+                id="raise-amount"
+                type="number"
                 min={minRaise}
                 max={humanPlayer?.chips || 1000}
                 value={betAmount || minRaise}
                 onChange={(e) => setBetAmount(Number(e.target.value))}
+                className="raise-number-input"
+                placeholder="Сумма"
               />
               <button
                 onClick={() => handleAction('RAISE', betAmount || minRaise)}

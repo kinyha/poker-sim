@@ -106,6 +106,7 @@ public class GameController {
     private GameStateDto createStateDto(GameSession session) {
         return GameStateDto.from(
             session.getCurrentState(),
+            session.getPlayers(), // Pass all players including eliminated
             session.getHumanPlayer(),
             session.isHandComplete(),
             session.getLastResultMessage(),

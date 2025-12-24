@@ -11,16 +11,16 @@ interface Props {
 }
 
 export function PlayerSeat({ player, isActive, isButton, position, total }: Props) {
-  // Calculate position around the ellipse
+  // Calculate position around the ellipse (updated for 900x500 table)
   const angle = (position / total) * 2 * Math.PI - Math.PI / 2
-  const rx = 340 // horizontal radius
-  const ry = 180 // vertical radius
-  const x = 350 + rx * Math.cos(angle)
-  const y = 200 + ry * Math.sin(angle)
+  const rx = 420 // horizontal radius (increased from 340)
+  const ry = 220 // vertical radius (increased from 180)
+  const x = 450 + rx * Math.cos(angle) // center x (900/2)
+  const y = 250 + ry * Math.sin(angle) // center y (500/2)
 
   return (
     <div
-      className={`player-seat ${isActive ? 'active' : ''} ${player.folded ? 'folded' : ''}`}
+      className={`player-seat ${isActive ? 'active' : ''} ${player.folded ? 'folded' : ''} ${player.chips === 0 ? 'eliminated' : ''}`}
       style={{
         left: `${x}px`,
         top: `${y}px`,
@@ -36,8 +36,14 @@ export function PlayerSeat({ player, isActive, isButton, position, total }: Prop
         {player.currentBet > 0 && (
           <div className="player-bet">Ставка: ${player.currentBet}</div>
         )}
-        {player.folded && <div className="status-folded">ФОЛД</div>}
-        {player.allIn && <div className="status-allin">ALL-IN</div>}
+        {player.chips === 0 ? (
+          <div className="status-eliminated">ВЫБЫЛ</div>
+        ) : (
+          <>
+            {player.folded && <div className="status-folded">ФОЛД</div>}
+            {player.allIn && <div className="status-allin">ALL-IN</div>}
+          </>
+        )}
       </div>
 
       <div className="player-cards">

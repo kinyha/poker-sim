@@ -95,21 +95,40 @@ public class GameEngine {
             player.resetForNewHand();
         }
 
-        currentState = new GameState(players, betting.getSmallBlind(), betting.getBigBlind());
+        // Filter out players with 0 chips (eliminated players)
+        List<Player> activePlayers = players.stream()
+            .filter(p -> p.getChips() > 0)
+            .toList();
+
+        currentState = new GameState(activePlayers, betting.getSmallBlind(), betting.getBigBlind());
         currentState.setButtonPosition(buttonPosition);
 
         assignPositions();
     }
 
     private void assignPositions() {
-        List<Position> positions = Position.getPositionsForPlayerCount(players.size());
-        for (int i = 0; i < players.size(); i++) {
+        // Only assign positions to active players (those with chips > 0)
+        List<Player> activePlayers = currentState.getPlayers();
+        if (activePlayers.isEmpty()) return;
+
+        List<Position> positions = Position.getPositionsForPlayerCount(activePlayers.size());
+
+        // Find the button position among active players
+        int activeButtonPos = 0;
+        for (int i = 0; i < activePlayers.size(); i++) {
+            if (players.indexOf(activePlayers.get(i)) >= buttonPosition) {
+                activeButtonPos = i;
+                break;
+            }
+        }
+
+        for (int i = 0; i < activePlayers.size(); i++) {
             // relativePos: 0=button, 1=SB, 2=BB, etc.
-            int relativePos = (i - buttonPosition + players.size()) % players.size();
+            int relativePos = (i - activeButtonPos + activePlayers.size()) % activePlayers.size();
             // positions list is [SB, BB, ..., BTN], so BTN is at the end
             // Map: 0 -> BTN (last), 1 -> SB (first), 2 -> BB (second), etc.
             int posIndex = (relativePos + positions.size() - 1) % positions.size();
-            players.get(i).setPosition(positions.get(posIndex));
+            activePlayers.get(i).setPosition(positions.get(posIndex));
         }
     }
 
