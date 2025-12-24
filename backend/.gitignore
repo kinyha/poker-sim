@@ -1,0 +1,15 @@
+# Gradle
+.gradle/
+build/
+
+# IDE
+*.iml
+out/
+
+# Logs
+*.log
+
+# Environment
+.env
+application-local.properties
+application-local.yml
