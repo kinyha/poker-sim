@@ -1,0 +1,89 @@
+.player-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.5rem;
+  min-width: 100px;
+  transition: all 0.2s;
+}
+
+.player-seat.active {
+  box-shadow: 0 0 15px #4caf50;
+  border: 2px solid #4caf50;
+}
+
+.player-seat.folded {
+  opacity: 0.5;
+}
+
+.dealer-button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  border: 2px solid #000;
+}
+
+.player-info {
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+.player-position {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.player-chips {
+  color: #ffd700;
+}
+
+.player-bet {
+  color: #4caf50;
+}
+
+.status-folded {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.status-allin {
+  color: #9b59b6;
+  font-weight: bold;
+}
+
+.player-cards {
+  display: flex;
+  gap: 2px;
+}
+
+.player-cards .card {
+  width: 35px;
+  height: 50px;
+  font-size: 0.7rem;
+}
+
+.player-cards .card .rank {
+  font-size: 0.9rem;
+}
+
+.player-cards .card .suit {
+  font-size: 1rem;
+}

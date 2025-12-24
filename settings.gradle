@@ -1,0 +1,4 @@
+rootProject.name = 'poker-trainer'
+
+include 'backend'
+include 'frontend'

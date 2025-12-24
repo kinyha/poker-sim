@@ -1,0 +1,26 @@
+.card {
+  width: 50px;
+  height: 70px;
+  background: #fff;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.card-hidden {
+  background: linear-gradient(135deg, #2c3e50 25%, #34495e 25%, #34495e 50%, #2c3e50 50%, #2c3e50 75%, #34495e 75%);
+  background-size: 10px 10px;
+  font-size: 2rem;
+}
+
+.card .rank {
+  font-size: 1.2rem;
+}
+
+.card .suit {
+  font-size: 1.5rem;
+}

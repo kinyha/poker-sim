@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradle wrapper:*)",
+      "Bash(ls:*)",
+      "Bash(./gradlew.bat:*)"
+    ]
+  }
+}
