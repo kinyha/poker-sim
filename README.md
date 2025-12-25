@@ -110,9 +110,12 @@ poker-sim/
 
 ### Настройка игры
 Выбор количества игроков, стека, блайндов и стиля AI.
+<img width="687" height="1239" alt="image" src="https://github.com/user-attachments/assets/9a104bfc-bb67-48bb-96cc-c32fe55811b3" />
+
 
 ### Покерный стол
 Овальный стол с игроками, картами и панелью действий.
+<img width="1198" height="1147" alt="image" src="https://github.com/user-attachments/assets/c6dbc187-0172-4cb2-83cf-678c47bae285" />
 
 ### Рекомендации
 Подсказки по оптимальным действиям с учётом позиции.
@@ -120,3 +123,4 @@ poker-sim/
 ## Лицензия
 
 MIT
+
