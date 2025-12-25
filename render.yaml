@@ -11,13 +11,3 @@ services:
         value: https://poker-sim.onrender.com
       - key: JAVA_TOOL_OPTIONS
         value: -Xmx256m
-
-staticSites:
-  - name: poker-sim
-    repo: https://github.com/kinyha/poker-sim
-    branch: main
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://poker-sim-api.onrender.com/api/game
