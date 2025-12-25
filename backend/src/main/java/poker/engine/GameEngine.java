@@ -101,9 +101,24 @@ public class GameEngine {
             .toList();
 
         currentState = new GameState(activePlayers, betting.getSmallBlind(), betting.getBigBlind());
-        currentState.setButtonPosition(buttonPosition);
+
+        // Translate button position from full player list to active player list
+        int activeButtonPos = findActiveButtonPosition(activePlayers);
+        currentState.setButtonPosition(activeButtonPos);
 
         assignPositions();
+    }
+
+    private int findActiveButtonPosition(List<Player> activePlayers) {
+        // Find the button position among active players
+        // The button should be on the first active player at or after the engine's buttonPosition
+        for (int i = 0; i < activePlayers.size(); i++) {
+            if (players.indexOf(activePlayers.get(i)) >= buttonPosition) {
+                return i;
+            }
+        }
+        // If no player found after buttonPosition, wrap around to first active player
+        return 0;
     }
 
     private void assignPositions() {
@@ -113,14 +128,7 @@ public class GameEngine {
 
         List<Position> positions = Position.getPositionsForPlayerCount(activePlayers.size());
 
-        // Find the button position among active players
-        int activeButtonPos = 0;
-        for (int i = 0; i < activePlayers.size(); i++) {
-            if (players.indexOf(activePlayers.get(i)) >= buttonPosition) {
-                activeButtonPos = i;
-                break;
-            }
-        }
+        int activeButtonPos = currentState.getButtonPosition();
 
         for (int i = 0; i < activePlayers.size(); i++) {
             // relativePos: 0=button, 1=SB, 2=BB, etc.
@@ -136,11 +144,11 @@ public class GameEngine {
         currentState.resetBettingRound();
 
         if (currentState.getStage() == GameStage.PREFLOP) {
-            int utg = (currentState.getButtonPosition() + 3) % players.size();
+            int utg = (currentState.getButtonPosition() + 3) % currentState.getPlayers().size();
             currentState.setActivePlayerIndex(utg);
         }
 
-        int maxIterations = players.size() * 10; // Safety limit
+        int maxIterations = currentState.getPlayers().size() * 10; // Safety limit
         int iterations = 0;
 
         while (!betting.isRoundComplete(currentState) && currentState.getPlayersInHand() > 1) {

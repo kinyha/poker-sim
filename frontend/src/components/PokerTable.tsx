@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { submitAction, getGameState, startHand } from '../api'
 import { GameState, ActionType } from '../types'
 import { CardDisplay } from './CardDisplay'
@@ -9,6 +10,34 @@ interface Props {
   sessionId: string
   gameState: GameState
   onStateUpdate: (state: GameState) => void
+}
+
+const stageNames: Record<string, string> = {
+  'PREFLOP': 'Префлоп',
+  'FLOP': 'Флоп',
+  'TURN': 'Тёрн',
+  'RIVER': 'Ривер',
+  'SHOWDOWN': 'Шоудаун'
+}
+
+// Parse recommendation string into action and reasoning
+function parseRecommendation(recommendation: string | null): { action: string; reasoning: string } | null {
+  if (!recommendation) return null
+
+  // Format: "Фолд: K6o - Мусор. Фолд! ..."
+  const colonIndex = recommendation.indexOf(':')
+  if (colonIndex === -1) {
+    return { action: recommendation, reasoning: '' }
+  }
+
+  const action = recommendation.substring(0, colonIndex).trim()
+  let reasoning = recommendation.substring(colonIndex + 1).trim()
+
+  // Remove duplicate "Позиция:" and "Рекомендация:" parts if present
+  reasoning = reasoning.replace(/\s*Позиция:.*$/i, '').trim()
+  reasoning = reasoning.replace(/\s*Рекомендация:.*$/i, '').trim()
+
+  return { action, reasoning }
 }
 
 export function PokerTable({ sessionId, gameState, onStateUpdate }: Props) {
@@ -62,130 +91,285 @@ export function PokerTable({ sessionId, gameState, onStateUpdate }: Props) {
   const minRaise = gameState.currentBet + 20
 
   return (
-    <div className="poker-table-container">
-      <div className="table-info">
-        <span className="stage">{gameState.stage}</span>
-        <span className="pot">Банк: ${gameState.pot}</span>
-      </div>
-
-      <div className="poker-table">
-        <div className="community-cards">
-          {gameState.communityCards.map((card, i) => (
-            <CardDisplay key={i} card={card} />
-          ))}
-          {gameState.communityCards.length === 0 && (
-            <div className="no-cards">Карты ещё не раздали</div>
-          )}
+    <div className="table-container">
+      {/* Top info bar */}
+      <motion.div
+        className="top-bar"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="stage-badge">
+          <span className="stage-label">Стадия</span>
+          <span className="stage-value">{stageNames[gameState.stage] || gameState.stage}</span>
         </div>
-
-        <div className="players-circle">
-          {gameState.players.map((player, i) => (
-            <PlayerSeat
-              key={i}
-              player={player}
-              isActive={i === gameState.activePlayerIndex && !gameState.handComplete}
-              isButton={i === gameState.buttonPosition}
-              position={i}
-              total={gameState.players.length}
-            />
-          ))}
-        </div>
-      </div>
-
-      {gameState.handComplete && (
-        <div className="result-panel">
-          <div className="result-message">
-            {gameState.resultMessage || 'Раздача завершена'}
-          </div>
-          <button
-            onClick={handleNextHand}
-            disabled={loading}
-            className="btn-next-hand"
+        <div className="pot-display">
+          <span className="pot-label">Банк</span>
+          <motion.span
+            className="pot-value"
+            key={gameState.pot}
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
           >
-            {loading ? 'Загрузка...' : 'Следующая раздача'}
-          </button>
+            {gameState.pot.toLocaleString()}
+          </motion.span>
         </div>
-      )}
+      </motion.div>
 
-      {!gameState.handComplete && gameState.isHumanTurn && (
-        <div className="action-panel">
-          {gameState.recommendation && (() => {
-            const parts = gameState.recommendation.split(': ')
-            const action = parts[0]
-            const reasoning = parts.slice(1).join(': ')
-            return (
-              <div className="recommendation">
-                <div className="rec-header">
-                  <span className="rec-label">Подсказка:</span>
-                </div>
-                <div className="rec-action">Действие: <strong>{action}</strong></div>
-                <div className="rec-reasoning">Обоснование: {reasoning}</div>
-              </div>
-            )
-          })()}
-          <div className="action-buttons">
-            <button
-              onClick={() => handleAction('FOLD')}
-              disabled={loading}
-              className="btn-fold"
-            >
-              Фолд
-            </button>
+      {/* Main table */}
+      <div className="table-wrapper">
+        <motion.div
+          className="poker-table"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Felt texture overlay */}
+          <div className="felt-overlay" />
 
-            {canCheck ? (
-              <button
-                onClick={() => handleAction('CHECK')}
-                disabled={loading}
-                className="btn-check"
-              >
-                Чек
-              </button>
-            ) : (
-              <button
-                onClick={() => handleAction('CALL')}
-                disabled={loading}
-                className="btn-call"
-              >
-                Колл ${amountToCall}
-              </button>
-            )}
+          {/* Table rail */}
+          <div className="table-rail" />
 
-            <div className="raise-controls">
-              <input
-                id="raise-amount"
-                type="number"
-                min={minRaise}
-                max={humanPlayer?.chips || 1000}
-                value={betAmount || minRaise}
-                onChange={(e) => setBetAmount(Number(e.target.value))}
-                className="raise-number-input"
-                placeholder="Сумма"
-              />
-              <button
-                onClick={() => handleAction('RAISE', betAmount || minRaise)}
-                disabled={loading}
-                className="btn-raise"
-              >
-                Рейз ${betAmount || minRaise}
-              </button>
-            </div>
-
-            <button
-              onClick={() => handleAction('ALL_IN')}
-              disabled={loading}
-              className="btn-allin"
-            >
-              Олл-ин ${humanPlayer?.chips}
-            </button>
+          {/* Community cards area */}
+          <div className="community-area">
+            <AnimatePresence mode="popLayout">
+              {gameState.communityCards.length > 0 ? (
+                gameState.communityCards.map((card, i) => (
+                  <motion.div
+                    key={`${card.rank}-${card.suit}-${i}`}
+                    initial={{ opacity: 0, y: -30, rotateY: 180 }}
+                    animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{
+                      duration: 0.4,
+                      delay: i * 0.1,
+                      type: 'spring',
+                      stiffness: 200
+                    }}
+                  >
+                    <CardDisplay card={card} size="large" />
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div
+                  className="waiting-cards"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <span className="waiting-icon">♠ ♥ ♦ ♣</span>
+                  <span className="waiting-text">Ожидание карт...</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      )}
 
-      {!gameState.handComplete && !gameState.isHumanTurn && (
-        <div className="waiting-message">
-          Ожидание хода других игроков...
-        </div>
-      )}
+          {/* Pot chips visualization */}
+          {gameState.pot > 0 && (
+            <motion.div
+              className="pot-chips"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200 }}
+            >
+              <div className="chip-stack">
+                <div className="chip chip-gold" />
+                <div className="chip chip-gold" style={{ top: '-4px' }} />
+                <div className="chip chip-gold" style={{ top: '-8px' }} />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Player seats */}
+          <div className="players-container">
+            {gameState.players.map((player, i) => (
+              <PlayerSeat
+                key={i}
+                player={player}
+                isActive={i === gameState.activePlayerIndex && !gameState.handComplete}
+                isButton={i === gameState.buttonPosition}
+                position={i}
+                total={gameState.players.length}
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Result overlay */}
+      <AnimatePresence>
+        {gameState.handComplete && (
+          <motion.div
+            className="result-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="result-card"
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 200 }}
+            >
+              <div className="result-header">
+                <span className="result-crown">♔</span>
+                <h2 className="result-title">Раздача завершена</h2>
+              </div>
+
+              {/* Community cards in result */}
+              {gameState.communityCards.length > 0 && (
+                <div className="result-community">
+                  <span className="result-community-label">Карты на столе</span>
+                  <div className="result-cards">
+                    {gameState.communityCards.map((card, i) => (
+                      <CardDisplay key={`result-${card.rank}-${card.suit}-${i}`} card={card} size="medium" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="result-message">
+                {gameState.resultMessage || 'Готово к следующей раздаче'}
+              </div>
+              <motion.button
+                className="btn-next"
+                onClick={handleNextHand}
+                disabled={loading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {loading ? (
+                  <span className="btn-loading">●●●</span>
+                ) : (
+                  <>Следующая раздача</>
+                )}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Action panel */}
+      <AnimatePresence>
+        {!gameState.handComplete && gameState.isHumanTurn && (
+          <motion.div
+            className="action-panel"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+          >
+            {/* Recommendation - 3 blocks */}
+            {gameState.recommendation && (() => {
+              const parsed = parseRecommendation(gameState.recommendation)
+              if (!parsed) return null
+              return (
+                <motion.div
+                  className="recommendation-grid"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className="rec-block rec-action-block">
+                    <span className="rec-block-label">Действие</span>
+                    <span className="rec-block-value rec-action-value">{parsed.action}</span>
+                  </div>
+                  <div className="rec-block rec-comment-block">
+                    <span className="rec-block-label">Комментарий</span>
+                    <span className="rec-block-value">{parsed.reasoning || '—'}</span>
+                  </div>
+                  <div className="rec-block rec-position-block">
+                    <span className="rec-block-label">Позиция</span>
+                    <span className="rec-block-value">{humanPlayer?.position || '—'}</span>
+                  </div>
+                </motion.div>
+              )
+            })()}
+
+            {/* Action buttons */}
+            <div className="action-buttons">
+              <motion.button
+                className="action-btn btn-fold"
+                onClick={() => handleAction('FOLD')}
+                disabled={loading}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="btn-label">Фолд</span>
+              </motion.button>
+
+              {canCheck ? (
+                <motion.button
+                  className="action-btn btn-check"
+                  onClick={() => handleAction('CHECK')}
+                  disabled={loading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="btn-label">Чек</span>
+                </motion.button>
+              ) : (
+                <motion.button
+                  className="action-btn btn-call"
+                  onClick={() => handleAction('CALL')}
+                  disabled={loading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="btn-label">Колл</span>
+                  <span className="btn-amount">{amountToCall}</span>
+                </motion.button>
+              )}
+
+              <div className="raise-group">
+                <input
+                  type="number"
+                  className="raise-input"
+                  min={minRaise}
+                  max={humanPlayer?.chips || 1000}
+                  value={betAmount || minRaise}
+                  onChange={(e) => setBetAmount(Number(e.target.value))}
+                />
+                <motion.button
+                  className="action-btn btn-raise"
+                  onClick={() => handleAction('RAISE', betAmount || minRaise)}
+                  disabled={loading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="btn-label">Рейз</span>
+                  <span className="btn-amount">{betAmount || minRaise}</span>
+                </motion.button>
+              </div>
+
+              <motion.button
+                className="action-btn btn-allin"
+                onClick={() => handleAction('ALL_IN')}
+                disabled={loading}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="btn-label">Олл-ин</span>
+                <span className="btn-amount">{humanPlayer?.chips}</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Waiting indicator */}
+      <AnimatePresence>
+        {!gameState.handComplete && !gameState.isHumanTurn && (
+          <motion.div
+            className="waiting-indicator"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="waiting-spinner" />
+            <span>Ход соперника...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
