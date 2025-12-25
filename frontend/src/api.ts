@@ -1,6 +1,6 @@
 import { GameSetupConfig, GameState, ActionType } from './types'
 
-const API_BASE = '/api/game'
+const API_BASE = import.meta.env.VITE_API_URL || '/api/game'
 
 export async function createGame(config: GameSetupConfig): Promise<string> {
   const response = await fetch(`${API_BASE}/create`, {

@@ -1,0 +1,42 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+# Deploy both frontend and backend with one click
+
+services:
+  # Backend - Spring Boot API
+  - type: web
+    name: poker-sim-api
+    runtime: docker
+    repo: https://github.com/kinyha/poker-sim
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/game/health
+    envVars:
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://poker-sim.onrender.com
+      - key: JAVA_TOOL_OPTIONS
+        value: -Xmx256m
+    plan: free
+
+  # Frontend - React Static Site
+  - type: web
+    name: poker-sim
+    runtime: static
+    repo: https://github.com/kinyha/poker-sim
+    branch: main
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://poker-sim-api.onrender.com/api/game
+    plan: free
