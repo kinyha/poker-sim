@@ -15,12 +15,10 @@ services:
         value: https://poker-sim.onrender.com
       - key: JAVA_TOOL_OPTIONS
         value: -Xmx256m
-    plan: free
 
   # Frontend - React Static Site
-  - type: web
+  - type: static
     name: poker-sim
-    runtime: static
     repo: https://github.com/kinyha/poker-sim
     branch: main
     buildCommand: cd frontend && npm install && npm run build
@@ -39,4 +37,3 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://poker-sim-api.onrender.com/api/game
-    plan: free
