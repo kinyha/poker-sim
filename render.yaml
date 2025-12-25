@@ -1,8 +1,4 @@
-# Render Blueprint - https://render.com/docs/blueprint-spec
-# Deploy both frontend and backend with one click
-
 services:
-  # Backend - Spring Boot API
   - type: web
     name: poker-sim-api
     runtime: docker
@@ -16,24 +12,12 @@ services:
       - key: JAVA_TOOL_OPTIONS
         value: -Xmx256m
 
-# Frontend - React Static Site (separate section)
 staticSites:
   - name: poker-sim
     repo: https://github.com/kinyha/poker-sim
     branch: main
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
-      - path: /index.html
-        name: Cache-Control
-        value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://poker-sim-api.onrender.com/api/game
